@@ -8,9 +8,6 @@ import numpy
 from scipy.stats import norm
 import itertools
 
-N = norm.cdf
-log = numpy.log
-
 def grad(f,x,tol=1e-6):
     '''
     compute approximate gradient vector of function f at x
@@ -106,10 +103,4 @@ def clustered_output(mod,fit,group):
     outp.columns = ['Coef','SE','Cl. SE']
     return outp
 
-
-
-if __name__ == '__main__':
-    test_probit_logit()
-    import clustering_petersen_example
-    clustering_petersen_example.test_petersen()
 

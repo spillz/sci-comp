@@ -1,12 +1,15 @@
 '''Test module for clustered standard errors'''
 
+
 def test_probit_logit():
     '''
     SAMPLE PROGRAM COMPARING CLUSTERED AND REGULAR STANDARD ERRORS FOR PROBIT AND LOGIT
     '''
 
+    import numpy
     import pandas
     import statsmodels.api as sm
+    import clustered_se
 
     print 'TEST OF PROBIT/LOGIT CLUSTERED STANDARD ERROR CORRECTION'
 
@@ -34,13 +37,13 @@ def test_probit_logit():
     print 'LOGIT'
     modl = sm.Logit(y,X)
     resl = modl.fit()
-    print clustered_output(modl,resl,gp)
+    print clustered_se.clustered_output(modl,resl,gp)
     print
 
     print 'PROBIT'
     modp = sm.Probit(y,X)
     resp = modp.fit()
-    print clustered_output(modp,resp,gp)
+    print clustered_se.clustered_output(modp,resp,gp)
     print
 
 
@@ -125,4 +128,5 @@ def test_petersen():
 
 
 if __name__ == '__main__':
+    test_probit_logit()
     test_petersen()
