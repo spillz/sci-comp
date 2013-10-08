@@ -1,6 +1,8 @@
 #clustered standard error computation
-#Given Likelihood function L, score s (i.e. gradient vector) and Information matrix I
-# estimator B
+#Uses the methods described in
+#A. Colin Cameron, Jonah B. Gelbach & Douglas L. Miller (2011) Robust Inference With Multiway
+#Clustering, Journal of Business & Economic Statistics, 29:2, 238-249, DOI: 10.1198/jbes.2010.07136
+
 
 import numpy
 from scipy.stats import norm
@@ -23,7 +25,9 @@ def grad(f,x,tol=1e-3):
 
 def clustered_se_from_model(model,params,cluster_var):
     '''
-    Compute clustered standard errors from maximum likelihood object model, with estimated params, clustering on cluster_var
+    Computes one-way clustered standard errors from maximum likelihood object model,
+    with estimated params, clustering on cluster_var
+    returns a matrix containing the clustered variance-covariance terms
     '''
     groups = numpy.unique(cluster_var)
     B=params
@@ -54,8 +58,10 @@ if __name__ == '__main__':
     import pandas
     import statsmodels.api as sm
 
+    #SAMPLE PROGRAM COMPARING CLUSTERED AND REGULAR STANDARD ERRORS FOR PROBIT AND LOGIT
+
     #generate probit data with cluster correlated error structure
-    gps = 10 # number of clusters (groups)
+    gps = 30 # number of clusters (groups)
     obs = 10000 # number of observations per group
 
     #generate errors
@@ -99,9 +105,6 @@ if __name__ == '__main__':
 #D = sum(g) h_g h_g'
 #h_g = sum(i in N_g) h_i
 
-#dlog = lambda x:grad(lambda y:log(y.prod()),x)
-#print dlog(numpy.array([1.0,2.0,3.0]))
-#print grad(dlog,numpy.array([1.0,2.0,3.0]))
 '''
 LEGACY CODE
 def probit_llike_cpts(y,X,B):
