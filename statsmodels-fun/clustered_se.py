@@ -10,9 +10,9 @@ from scipy.stats import norm
 N = norm.cdf
 log = numpy.log
 
-def grad(f,x,tol=1e-3):
+def grad(f,x,tol=1e-6):
     '''
-    compute gradient vector of function f at x
+    compute approximate gradient vector of function f at x
     '''
     f0 = f(x)
     x= numpy.array(x)
@@ -23,6 +23,7 @@ def grad(f,x,tol=1e-3):
         g[i] = (f(x1) - f0) / tol
     return g
 
+
 def clustered_se_from_model(model,params,cluster_var):
     '''
     Computes one-way clustered standard errors from maximum likelihood object model,
@@ -32,15 +33,31 @@ def clustered_se_from_model(model,params,cluster_var):
     groups = numpy.unique(cluster_var)
     B=params
     score_cpts = grad(model.loglikeobs,B).transpose() #probit_score_cpts(y,X,B).transpose()
-    A = numpy.matrix(grad(model.score,B)).transpose()
+    try:
+        try:
+            A = numpy.matrix(model.information(B))
+        except NotImplementedError:
+            A = numpy.matrix(grad(model.score,B)).transpose()
+            print 'WARNING: Using approximate gradient of score to compute information matrix'
+    except NotImplementedError:
+        score = lambda b: grad(model.loglike,b)
+        A = numpy.matrix(grad(score,B)).transpose()
+        print 'WARNING: Using approximate hessian to compute information matrix'
     D = numpy.zeros((len(B),len(B)))
     for g in groups:
         h_g = score_cpts[cluster_var == g].sum(0)
-        D += numpy.outer(h_g,h_g)
+        D += numpy.outer(h_g,h_g) #was outer
     Ainv = A**(-1)
     D = numpy.matrix(D)
     V = Ainv*D*Ainv.T
-    return V
+
+    #degrees of freedom correction
+    M = len(groups)
+    N = len(score_cpts)
+    K = len(B)
+    dfc = 1.0*M/(M-1)*(N-1)/(N-K)
+
+    return dfc*V
 
 def clustered_output(mod,fit,group):
     '''
@@ -50,19 +67,20 @@ def clustered_output(mod,fit,group):
     cse= numpy.diag(clustered_se_from_model(mod,fit.params,group))**0.5
     scse=pandas.Series(cse,index=fit.params.index)
     outp = pandas.DataFrame([fit.params,fit.bse,scse]).transpose()
-    outp.columns = ['Estimate','SE','Clustered SE']
+    outp.columns = ['Coef','SE','Cl. SE']
     return outp
 
 
-if __name__ == '__main__':
+def test_probit_logit():
     import pandas
     import statsmodels.api as sm
 
     #SAMPLE PROGRAM COMPARING CLUSTERED AND REGULAR STANDARD ERRORS FOR PROBIT AND LOGIT
+    print 'TEST OF PROBIT/LOGIT CLUSTERED STANDARD ERROR CORRECTION'
 
     #generate probit data with cluster correlated error structure
     gps = 30 # number of clusters (groups)
-    obs = 10000 # number of observations per group
+    obs = 1000 # number of observations per group
 
     #generate errors
     e1 = numpy.random.randn(obs,gps) #iid errors across groups and observations
@@ -91,44 +109,10 @@ if __name__ == '__main__':
     modp = sm.Probit(y,X)
     resp = modp.fit()
     print clustered_output(modp,resp,gp)
+    print
 
+if __name__ == '__main__':
+    test_probit_logit()
+    import clustering_petersen_example
+    clustering_petersen_example.test_petersen()
 
-
-
-#There are I individual observations and G groups
-#each i is in one group g (N_g < N all g)
-
-#V(B) = A**(-1)*D*A.T**(-1)
-
-#A = sum(i) dh_i/dB
-#D = V[sum(i) h_i]
-#D = sum(g) h_g h_g'
-#h_g = sum(i in N_g) h_i
-
-'''
-LEGACY CODE
-def probit_llike_cpts(y,X,B):
-    XB = X.dot(B)
-    return y * log( N(XB) ) + (1-y) * log( 1-N(XB) )
-
-def probit_score(y,X,B):
-    fn = lambda q: probit_llike_cpts(y,X,q).sum(-1)
-    return grad(fn,B)
-
-def probit_score_cpts(y,X,B):
-    fn = lambda q: probit_llike_cpts(y,X,q)
-    return grad(fn,B)
-
-def clustered_se(y,X,B,cluster_var):
-    groups = numpy.unique(cluster_var)
-    score_cpts = probit_score_cpts(y,X,B).transpose()
-    A = numpy.matrix(grad(lambda b:probit_score(y,X,b),B)).transpose()
-    D = numpy.zeros((len(B),len(B)))
-    for g in groups:
-        h_g = score_cpts[cluster_var == g].sum(0)
-        D += numpy.outer(h_g,h_g)
-    Ainv = A**(-1)
-    D = numpy.matrix(D)
-    V = Ainv*D*Ainv.T
-    return V
-'''
