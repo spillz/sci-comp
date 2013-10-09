@@ -52,7 +52,6 @@ def _cluster_D(model,params,cluster_var):
         D += numpy.outer(h_g,h_g) #was outer
     #degrees of freedom correction
     M = len(groups)
-    print 'M',M
     N = len(score_cpts)
     K = len(B)
     dfc = 1.0*M/(M-1)*(N-1)/(N-K)
