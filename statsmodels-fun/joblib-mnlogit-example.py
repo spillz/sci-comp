@@ -9,17 +9,6 @@ from itertools import permutations
 from joblib import Parallel, delayed
 import time
 
-#Get the data
-anes_data = sm.datasets.anes96.load()
-anes_exog = anes_data.exog
-anes_endog = anes_data.endog
-anes_exog = sm.add_constant(anes_exog, prepend=True)
-anes_exog = anes_exog
-
-#We are going run the model on permutations of the first four exogenous vars and all of the remaining vars
-varlist = range(5)
-ovars = tuple(range(5,10))
-
 #This function, which carries out the regression, is called on variants of the x vars
 def reg(y,x):
     mlogit_mod = sm.MNLogit(y, x)
@@ -45,6 +34,18 @@ def run_par(n_jobs,output=False):
     return t
 
 if __name__ == '__main__':
+    #Get the data
+    anes_data = sm.datasets.anes96.load()
+    anes_exog = anes_data.exog
+    anes_endog = anes_data.endog
+    anes_exog = sm.add_constant(anes_exog, prepend=True)
+    anes_exog = anes_exog
+
+    #We are going run the model on permutations of the first four exogenous vars and all of the remaining vars
+    varlist = range(5)
+    ovars = tuple(range(5,10))
+
+
     #run using between 1 and 8 jobs and output the times
     max_jobs = 10
     times = [run_par(n+1) for n in range(max_jobs)]
