@@ -44,10 +44,11 @@ def run_par(n_jobs,output=False):
     print
     return t
 
-#run using between 1 and 8 jobs and output the times
-max_jobs = 10
-times = [run_par(n+1) for n in range(max_jobs)]
-print '# Jobs\ttime(s)\tSpeedup multiple vs 1 job'
-for n in range(max_jobs):
-    print '%i\t%3.2f\t%3.2f'%(n+1,times[n],times[0]/times[n])
-print
+if __name__ == '__main__':
+    #run using between 1 and 8 jobs and output the times
+    max_jobs = 10
+    times = [run_par(n+1) for n in range(max_jobs)]
+    print '# Jobs\ttime(s)\tSpeedup multiple vs 1 job'
+    for n in range(max_jobs):
+        print '%i\t%3.2f\t%3.2f'%(n+1,times[n],times[0]/times[n])
+    print
