@@ -17,7 +17,7 @@ anes_exog = sm.add_constant(anes_exog, prepend=True)
 anes_exog = anes_exog
 
 #We are going run the model on permutations of the first four exogenous vars and all of the remaining vars
-varlist = range(4)
+varlist = range(5)
 ovars = tuple(range(5,10))
 
 #This function, which carries out the regression, is called on variants of the x vars
@@ -31,20 +31,23 @@ def reg(y,x):
 #sets up and runs the regressions using multiple jobs
 def run_par(n_jobs,output=False):
     print 'running with %s jobs'%(n_jobs,)
-    t=time.time()
+    s=time.time()
     results = Parallel(n_jobs = n_jobs)(delayed(reg)(anes_endog,anes_exog[:,p+ovars])  for p in permutations(varlist))
-    s=time.time()-t
+    t=time.time()-s
     if output:
         for parms in results:
                 print parms
                 print margeffs
                 print
-    print 'took',s
+    print 'took',t
     print '###############################################'
     print
-    return s
+    return t
 
 #run using between 1 and 8 jobs and output the times
-times = [run_par(n+1) for n in range(8)]
-for n in range(8):
-    print '%i:%3.6f'%(n+1,times[n])
+max_jobs = 10
+times = [run_par(n+1) for n in range(max_jobs)]
+print '# Jobs\ttime(s)\tSpeedup multiple vs 1 job'
+for n in range(max_jobs):
+    print '%i\t%3.2f\t%3.2f'%(n+1,times[n],times[0]/times[n])
+print
