@@ -34,18 +34,18 @@ def test_probit_logit():
 #    for i in range(2,gps+1):
 #        X['G%i'%(i,)]=1*(gp == i)
 
+
     print 'LOGIT'
     modl = sm.Logit(y,X)
     resl = modl.fit()
-    print clustered_se.clustered_output(modl,resl,gp)
+    print clustered_se.clustered_output(resl,gp)
     print
 
     print 'PROBIT'
     modp = sm.Probit(y,X)
     resp = modp.fit()
-    print clustered_se.clustered_output(modp,resp,gp)
+    print clustered_se.clustered_output(resp,gp)
     print
-
 
 def test_petersen():
     '''
@@ -101,19 +101,19 @@ def test_petersen():
     print 'CLUSTERED STANDARD ERRORS'
 
     print 'BY YR'
-    my_se_yr = numpy.diag(clustered_se.clustered_se_from_model(mod,res.params,df['yr']))**0.5
+    my_se_yr = numpy.diag(clustered_se.clustered_se(res,df['yr']))**0.5
     print 'Mine',my_se_yr
     print 'Petersen',se_by_yr
     print
 
     print 'BY FIRM'
-    my_se_firm = numpy.diag(clustered_se.clustered_se_from_model(mod,res.params,df['firmid']))**0.5
+    my_se_firm = numpy.diag(clustered_se.clustered_se(res,df['firmid']))**0.5
     print 'Mine',my_se_firm
     print 'Petersen',se_by_firm
     print
 
     print 'BY FIRM AND YEAR'
-    my_se_firm_and_yr = numpy.diag(clustered_se.multiway_clustered_se_from_model(mod,res.params,df[['firmid','yr']]))**0.5
+    my_se_firm_and_yr = numpy.diag(clustered_se.multiway_clustered_se(res,df[['firmid','yr']]))**0.5
     print 'Mine',my_se_firm_and_yr
     print 'Petersen',se_by_firm_and_yr
     print
@@ -125,6 +125,7 @@ def test_petersen():
     assert(numpy.abs(se_by_firm-my_se_firm).sum()<1e-4)
     assert(numpy.abs(se_by_firm_and_yr-my_se_firm_and_yr).sum()<1e-4)
     print 'Petersen test passed'
+
 
 
 if __name__ == '__main__':

@@ -28,8 +28,9 @@ def as_cluster_var(data):
     return data.view(data.dtype.descr * data.shape[1]).ravel()
 
 
-def _cluster_A(model,params):
-    B=params
+def _cluster_A(fit_results):
+    model = fit_results.model
+    B=fit_results.params
     try:
         try:
             A = numpy.matrix(model.information(B))
@@ -42,9 +43,10 @@ def _cluster_A(model,params):
         print 'WARNING: Using approximate hessian to compute information matrix'
     return A
 
-def _cluster_D(model,params,cluster_var):
+def _cluster_D(fit_results,cluster_var):
+    model = fit_results.model
+    B=fit_results.params
     groups = numpy.unique(cluster_var)
-    B=params
     score_cpts = grad(model.loglikeobs,B).transpose() #probit_score_cpts(y,X,B).transpose()
     D = numpy.zeros((len(B),len(B)))
     for g in groups:
@@ -58,47 +60,47 @@ def _cluster_D(model,params,cluster_var):
 
     return dfc*numpy.matrix(D)
 
-def clustered_se_from_model(model,params,cluster_var):
+def clustered_se(fit_results,cluster_var):
     '''
     Computes one-way clustered standard errors from maximum likelihood object model,
     with estimated params, clustering on cluster_var
     returns a matrix containing the clustered variance-covariance terms
     '''
-    A =  _cluster_A(model, params)
-    D = _cluster_D(model, params, cluster_var)
+    A =  _cluster_A(fit_results)
+    D = _cluster_D(fit_results, cluster_var)
     Ainv = A**(-1)
     V = Ainv*D*Ainv.T
     return V
 
-def multiway_clustered_se_from_model(model,params,cluster_vars):
+def multiway_clustered_se(fit_results,cluster_vars):
     '''
-    Computes one-way clustered standard errors from maximum likelihood object model,
+    Computes multi-way clustered standard errors from maximum likelihood object model,
     with estimated params, clustering on the variables in 2d array (or dataframe) cluster_vars
     returns a matrix containing the clustered variance-covariance terms
     '''
     cluster_vars=numpy.array(cluster_vars)
     D = 0
-    A = _cluster_A(model,params)
+    A = _cluster_A(fit_results)
     Ainv = A**(-1)
     for v in itertools.product([False,True],repeat=cluster_vars.shape[1]):
         if sum(v)==0:
             continue
         v=numpy.array(v,dtype=bool)
         cv = as_cluster_var(cluster_vars[:,v])
-        D0 = _cluster_D(model,params,cv)
+        D0 = _cluster_D(fit_results,cv)
         D = D - (-1)**sum(v) * D0
     V = Ainv*D*Ainv.T
     return V
 
 
-def clustered_output(mod,fit,group):
+def clustered_output(fit_results,group):
     '''
     Format a pandas table of output with clustered standard errors
     '''
     import pandas
-    cse= numpy.diag(clustered_se_from_model(mod,fit.params,group))**0.5
-    scse=pandas.Series(cse,index=fit.params.index)
-    outp = pandas.DataFrame([fit.params,fit.bse,scse]).transpose()
+    cse= numpy.diag(clustered_se(fit_results,group))**0.5
+    scse=pandas.Series(cse,index=fit_results.params.index)
+    outp = pandas.DataFrame([fit_results.params,fit_results.bse,scse]).transpose()
     outp.columns = ['Coef','SE','Cl. SE']
     return outp
 
