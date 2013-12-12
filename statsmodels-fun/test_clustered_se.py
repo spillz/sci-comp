@@ -101,19 +101,19 @@ def test_petersen():
     print 'CLUSTERED STANDARD ERRORS'
 
     print 'BY YR'
-    my_se_yr = numpy.diag(clustered_se.clustered_se(res,df['yr']))**0.5
+    my_se_yr = numpy.diag(clustered_se.clustered_cov(res,df['yr']))**0.5
     print 'Mine',my_se_yr
     print 'Petersen',se_by_yr
     print
 
     print 'BY FIRM'
-    my_se_firm = numpy.diag(clustered_se.clustered_se(res,df['firmid']))**0.5
+    my_se_firm = numpy.diag(clustered_se.clustered_cov(res,df['firmid']))**0.5
     print 'Mine',my_se_firm
     print 'Petersen',se_by_firm
     print
 
     print 'BY FIRM AND YEAR'
-    my_se_firm_and_yr = numpy.diag(clustered_se.multiway_clustered_se(res,df[['firmid','yr']]))**0.5
+    my_se_firm_and_yr = numpy.diag(clustered_se.multiway_clustered_cov(res,df[['firmid','yr']]))**0.5
     print 'Mine',my_se_firm_and_yr
     print 'Petersen',se_by_firm_and_yr
     print

@@ -60,7 +60,7 @@ def _cluster_D(fit_results,cluster_var):
 
     return dfc*numpy.matrix(D)
 
-def clustered_se(fit_results,cluster_var):
+def clustered_cov(fit_results,cluster_var):
     '''
     Computes one-way clustered standard errors from maximum likelihood object model,
     with estimated params, clustering on cluster_var
@@ -72,7 +72,7 @@ def clustered_se(fit_results,cluster_var):
     V = Ainv*D*Ainv.T
     return V
 
-def multiway_clustered_se(fit_results,cluster_vars):
+def multiway_clustered_cov(fit_results,cluster_vars):
     '''
     Computes multi-way clustered standard errors from maximum likelihood object model,
     with estimated params, clustering on the variables in 2d array (or dataframe) cluster_vars
@@ -98,7 +98,7 @@ def clustered_output(fit_results,group):
     Format a pandas table of output with clustered standard errors
     '''
     import pandas
-    cse= numpy.diag(clustered_se(fit_results,group))**0.5
+    cse= numpy.diag(clustered_cov(fit_results,group))**0.5
     scse=pandas.Series(cse,index=fit_results.params.index)
     outp = pandas.DataFrame([fit_results.params,fit_results.bse,scse]).transpose()
     outp.columns = ['Coef','SE','Cl. SE']
